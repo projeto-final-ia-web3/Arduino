@@ -1,3 +1,5 @@
+#include <EEPROM.h>
+
 // pino para controlar a saída dos motores de passo da esteira principal
 #define stepPin 2
 //pino para controle de direção dos motores da esteira principal
@@ -22,13 +24,12 @@
 // circulo - 1 - vermelho
 // quadrado - 2 - azul
 
-
 // variável
 int leituraSensor = 0;
 int contador = 0;
-bool motorParado = false;
+bool motorParado = true;
 char resposta = '3';
-
+int currentSensor = 0;
 String itemAnterior = "vazio";
 
 void setup() {
@@ -47,10 +48,27 @@ void setup() {
 }
 
 void loop() {
-  while (true) {
-    if (Serial.available() > 0) {
-      char receivedChar = Serial.read(); 
-      if (receivedChar == '0') {
+  digitalWrite(dirPin, LOW);
+  leituraSensor = digitalRead(pinoSensor);
+
+  if (Serial.available() > 0) {
+    char receivedChar = Serial.read(); 
+    moveSecondBeltByCommand(receivedChar);
+  }
+
+  movePrimaryBelt();  
+}
+
+void movePrimaryBelt() {
+    digitalWrite(stepPin, HIGH);
+    delayMicroseconds(1000);
+    digitalWrite(stepPin, LOW);
+    delayMicroseconds(1000);
+}
+
+
+void moveSecondBeltByCommand(char receivedChar) {
+  if (receivedChar == '0') {
         Serial.println("recebido 0");
         digitalWrite(dirPinY, LOW);
         for (int x = 0; x < 620; x++) {
@@ -66,7 +84,7 @@ void loop() {
         motorParado = false;
       } else if (receivedChar == '1') {
          digitalWrite(dirPinY, HIGH);
-        for (int x = 0; x < 1240; x++) {
+        for (int x = 0; x < 1040; x++) {
           digitalWrite(stepPinY, HIGH);
           delayMicroseconds(500); 
           digitalWrite(stepPinY, LOW);
@@ -80,7 +98,7 @@ void loop() {
         motorParado = false;
       } else if (receivedChar == '2') {
          digitalWrite(dirPinY, HIGH);
-        for (int x = 0; x < 1240; x++) {
+        for (int x = 0; x < 1050; x++) {
           digitalWrite(stepPinY, HIGH);
           delayMicroseconds(500); // Tempo de pulso alto
           digitalWrite(stepPinY, LOW);
@@ -93,7 +111,7 @@ void loop() {
         motorParado = false;
       } else if (receivedChar == '3') {
          digitalWrite(dirPinY, LOW);
-        for (int x = 0; x < 1240; x++) {
+        for (int x = 0; x < 1040; x++) {
           digitalWrite(stepPinY, HIGH);
           delayMicroseconds(500); // Tempo de pulso alto
           digitalWrite(stepPinY, LOW);
@@ -106,7 +124,7 @@ void loop() {
         motorParado = false;
       } else if (receivedChar == '4') {
          digitalWrite(dirPinY, HIGH);
-        for (int x = 0; x < 620; x++) {
+        for (int x = 0; x < 565; x++) {
           digitalWrite(stepPinY, HIGH);
           delayMicroseconds(500); // Tempo de pulso alto
           digitalWrite(stepPinY, LOW);
@@ -119,7 +137,7 @@ void loop() {
         motorParado = false;
       } else if (receivedChar == '5') {
          digitalWrite(dirPinY, HIGH);
-        for (int x = 0; x < 620; x++) {
+        for (int x = 0; x < 565; x++) {
           digitalWrite(stepPinY, HIGH);
           delayMicroseconds(500); // Tempo de pulso alto
           digitalWrite(stepPinY, LOW);
@@ -147,61 +165,4 @@ void loop() {
         Serial.println("S:0");
         motorParado = false;
       }
-    } else if (motorParado != true){
-        digitalWrite(dirPin, LOW);
-        leituraSensor = digitalRead(pinoSensor);
-
-        if (leituraSensor == LOW) {
-          Serial.println("A:I");
-          pararMotor();
-          motorParado = true;
-        } else {
-          digitalWrite(stepPin, HIGH);
-          delayMicroseconds(1000);
-          digitalWrite(stepPin, LOW);
-          delayMicroseconds(1000);
-        }
-    }
-  }
-}
-
-void pararMotor() {
-  Serial.println("U:0");
-
-
-    digitalWrite(enablePin, HIGH); // Desliga o motor temporariamente
-    delay(1000);
-    
-    contador++;
-    
-    
-    for (int i = 0; i < 1420; i++) {
-      digitalWrite(enablePin, LOW); // Liga o motor novamente
-      digitalWrite(dirPin, LOW);
-      digitalWrite(stepPin, HIGH);
-      delayMicroseconds(1000);
-      digitalWrite(stepPin, LOW);
-      delayMicroseconds(1000);
-    }
-
-    digitalWrite(enablePin, HIGH); // Desliga o motor permanentemente
-}
-
-void moveMotorAnteHorario() {
-  digitalWrite(dirPin, HIGH);
-
-  while (true) {
-    leituraSensor = digitalRead(pinoSensor);
-
-    if (leituraSensor == LOW) {
-      pararMotor();
-      motorParado = true;
-      break;
-    } else {
-      digitalWrite(stepPin, HIGH);
-      delayMicroseconds(1000);
-      digitalWrite(stepPin, LOW);
-      delayMicroseconds(1000);
-    }
-  }
 }
